@@ -1,8 +1,12 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">优衣橱</div></nav-bar>
-
-    <scroll class="content">
+    <tab-contral :title=" ['流行', '新款' , '精选' ] " @tabClick="tabClick"></tab-contral>
+    <scroll class="content" ref="scroll" 
+    @scroll="contentScroll" 
+    :probeType ="3"
+    :pull-up-load="true"
+    @pullingUp="LoadMore">
     <home-swiper :banners="banners"></home-swiper>
     <home-recommend :recommend="recommend"></home-recommend>
     <week-recommend></week-recommend>
@@ -10,6 +14,10 @@
     <!-- 将home这里获取的list数据传到goodlist文件中, 需要用goodlist文件做展示,currentType可以动态改变其字符串-->
     <good-list :goods="goods[currentType].list"></good-list>
     </scroll> 
+
+    <back-top @backTop="backTop" class="backTop" v-show="isShowBackTop" >
+      <img src="~assets/img/common/top.png" alt="">
+    </back-top>
   </div>
   
 </template>
@@ -24,8 +32,10 @@
   import tabContral from "components/common/navBar/tabContral"
   import goodList from "components/common/goodList/goodList"
   import scroll from "components/common/scroll/scroll"
+  import backTop from "components/connection/backTop/backTop"
 
   import {request} from "network/request"
+  import {NEW, POP, SELL, BACKTOP_DISTANCE} from "common/const";
 
 export default {
   components:{
@@ -35,7 +45,8 @@ export default {
     navBar,
     tabContral,
     goodList,
-    scroll
+    scroll,
+    backTop
   },
   data(){
     return{
@@ -47,23 +58,27 @@ export default {
         'sell': {page: 0, list: []},
       },
        //设置默认值currentType,注意写的位置在goods外面
-       currentType: 'pop'
+       currentType: 'pop',
+       isShowBackTop: false
     }
   },
   created() {
+    console.log('创建mouted');
     //请求轮播图数据
-    this.gteHomeMlutidata()
+    this.gteHomeMlutidata();
     //请求商品信息数据
-    this.getHomeGoods('pop')
-    this.getHomeGoods('new')
-    this.getHomeGoods('sell')
+    this.getHomeGoods('pop');
+    this.getHomeGoods('new');
+    this.getHomeGoods('sell');
+  },
+  mounted(){
+    
   },
   methods: {
     /*
     网络请求相关方法
     */
     tabClick(index){
-
       //切换currentType,改变请求的数据.
       switch(index){
         case 0:
@@ -76,6 +91,19 @@ export default {
           this.currentType = 'sell'
           break
       }
+    },
+    contentScroll(position){
+      //y值超过1000,使‘回到顶部按钮消失‘
+      this.isShowBackTop = -position.y > BACKTOP_DISTANCE
+    },
+    LoadMore(){
+      console.log("收到加载信号!");
+      this.getHomeGoods(this.currentType)
+    },
+    backTop(){
+      //console.log("点击成功!");
+      //调用scrollTo方法
+      this.$refs.scroll.scrollTo(0,0)
     },
     /*
     网络请求相关方法
@@ -101,9 +129,11 @@ export default {
       this.goods[type].list.push(...res.data.list)
       //完成数据请求后,将其pop数组中的page加1;在此前的基础上累加
       this.goods[type].page += 1
+      //在加载完一页之后重新刷新一个PullUp函数
+      this.$refs.scroll.finishPullUp()
     })
-    }
-    }
+    },
+  }
 }
 </script>
 <style scoped>
@@ -123,7 +153,12 @@ export default {
 .content{
   height: 700px;
   /* padding-bottom: 60px; */
-  overflow: hidden;
+  overflow: hidden; 
   height: calc(100% - 49px);
+}
+.backTop{
+  position: fixed;
+  right: 10px;
+  bottom: 60px;
 }
 </style>
