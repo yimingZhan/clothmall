@@ -1,5 +1,5 @@
 <template>
-  <div class="goods-item">
+  <div class="goods-item" @click="goodsItemClick">
     <img :src="goodsItem.show.img" >
     <div class="goods-info">
       <p class="title"> {{goodsItem.title}} </p>
@@ -22,6 +22,12 @@ export default {
       }
     }
   },
+  methods: {
+    goodsItemClick(){
+      console.log("点击了");
+      this.$router.push('/detail')
+    }
+  }
 }
 </script>
 

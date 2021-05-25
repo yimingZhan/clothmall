@@ -1,16 +1,21 @@
 <template>
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">优衣橱</div></nav-bar>
-    <tab-contral :title=" ['流行', '新款' , '精选' ] " @tabClick="tabClick"></tab-contral>
+    <tab-contral :title=" ['流行', '新款' , '精选' ] " @tabClick="tabClick" v-show="isActive" ref='tabContral1'></tab-contral>
     <scroll class="content" ref="scroll" 
     @scroll="contentScroll" 
     :probeType ="3"
     :pull-up-load="true"
     @pullingUp="LoadMore">
-    <home-swiper :banners="banners"></home-swiper>
+    <home-swiper :banners="banners" @swiperImageLoad="swiperImageLoad"></home-swiper>
     <home-recommend :recommend="recommend"></home-recommend>
     <week-recommend></week-recommend>
-    <tab-contral :title=" ['流行', '新款' , '精选' ] " @tabClick="tabClick"></tab-contral>
+    <tab-contral 
+    :title=" ['流行', '新款' , '精选' ] "  
+    @tabClick="tabClick" 
+    ref='tabContral2' 
+    v-show="!isActive"
+    ></tab-contral>
     <!-- 将home这里获取的list数据传到goodlist文件中, 需要用goodlist文件做展示,currentType可以动态改变其字符串-->
     <good-list :goods="goods[currentType].list"></good-list>
     </scroll> 
@@ -59,8 +64,21 @@ export default {
       },
        //设置默认值currentType,注意写的位置在goods外面
        currentType: 'pop',
-       isShowBackTop: false
+       isShowBackTop: false,
+       tabOffSetTop: 0,
+       isActive: false,
+       saveY: 0
     }
+  },
+  deactivated(){
+    console.log("离开了"+this.$refs.scroll.scroll.y);
+    this.saveY = this.$refs.scroll.scroll.y
+    
+  },
+  activated(){
+    console.log("进来了"+this.saveY);
+    this.$refs.scroll.scrollTo(0,this.saveY,1)
+    this.$refs.scroll.scroll.refresh()
   },
   created() {
     console.log('创建mouted');
@@ -70,9 +88,6 @@ export default {
     this.getHomeGoods('pop');
     this.getHomeGoods('new');
     this.getHomeGoods('sell');
-  },
-  mounted(){
-    
   },
   methods: {
     /*
@@ -91,19 +106,30 @@ export default {
           this.currentType = 'sell'
           break
       }
+      //这里的index就是点击的那个按钮的index
+      this.$refs.tabContral1.currentIndex = index
+      this.$refs.tabContral2.currentIndex = index
     },
     contentScroll(position){
       //y值超过1000,使‘回到顶部按钮消失‘
       this.isShowBackTop = -position.y > BACKTOP_DISTANCE
+      //y值超过offsettop的值,开启吸顶模式
+      this.isActive=(-position.y)>this.tabOffSetTop
     },
     LoadMore(){
-      console.log("收到加载信号!");
+      //console.log("收到加载信号!");
       this.getHomeGoods(this.currentType)
     },
     backTop(){
       //console.log("点击成功!");
       //调用scrollTo方法
       this.$refs.scroll.scrollTo(0,0)
+    },
+    swiperImageLoad(){
+    //获取tabControl的offettop值
+    this.tabOffSetTop=this.$refs.tabContral2.$el.offsetTop-44
+    console.log(this.tabOffSetTop);
+    
     },
     /*
     网络请求相关方法

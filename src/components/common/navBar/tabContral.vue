@@ -34,10 +34,8 @@ export default {
 }
 </script>
 
-<style >
+<style  scoped>
 .tabContral{
-  position: sticky;
-  top: 44px;
   background-color: white;
   padding: 10px 0 6px;
   display: flex;
